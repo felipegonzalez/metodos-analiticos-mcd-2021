@@ -69,3 +69,5 @@ RUN install2.r --error tm text2vec textrank \
      tidytext textreuse \
      ggraph here png
 
+RUN install2.r --error patchwork
+
