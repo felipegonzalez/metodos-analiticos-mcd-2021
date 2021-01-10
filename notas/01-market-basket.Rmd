@@ -621,7 +621,7 @@ simular_1 <- function(n_trans){
 
 ```{r}
 set.seed(125)
-n_trans <- c(10, 25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800)
+n_trans <- c(10, 25, 50, 100, 200, 400, 800, 1600, 3200, 6400, 12800, 25600)
 reps <- tibble(n_trans = rep(n_trans, each = 5)) %>% 
   mutate(conteos = map(n_trans, simular_1))
 reps_long_2 <- reps %>% unnest(cols = conteos) %>% 
@@ -634,6 +634,17 @@ ggplot(reps_long_2, aes(x=factor(n_trans), y = n)) + geom_boxplot() +
   xlab("Número de transacciones") + labs(subtitle = "Soporte min 0.005")
 ```
 
+**Observaciones**
+
+- Para conjuntos de transacciones chicos no podemos capturar muchos conjuntos
+frecuentes teóricos porque no observamos suficientes transacciones
+
+- Para niveles medios de número de transacciones, podemos obtener resultados ruidosos: muchos
+subconjuntos que identificamos como frecuentes no lo son realmente (es variación muestral)
+
+- Cuanto tenemos un número suficientemente alto de transacciones, el número de subconjuntos frecuentes
+encontrados se estabiliza en el valor teórico verdadero del número de conjuntos frecuentes
+que existen.
 
 ## Reglas de asociación
 
@@ -987,37 +998,41 @@ length(filtradas_lift)
 ```
 
 Vemos que las reglas cortadas con *hyper-lift* tienen mejores valores 
-de soporte
+de soporte:
 
 ```{r, fig.width=4}
+library(patchwork)
 soportes <- qqplot(
     quality(filtradas_hl)$support, 
     quality(filtradas_lift)$support, plot.it = FALSE) %>% 
   as_tibble()
-ggplot(soportes, aes(x, y)) +
+g_soporte <- ggplot(soportes, aes(x, y)) +
   geom_abline(colour = "red") +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   xlab("Soporte  (filtro Hyperlift)") +
   ylab("Soporte (filtro Lift)") + 
-  coord_fixed(xlim = c(0, 0.03), ylim = c(0,0.03)) 
-```
-
-
-Sin embargo, la distribución de valores de *lift* no es tan diferente, de forma que esta
-medida de calidad no se degrada en el conjunto de reglas que encontramos:
-
-
-```{r, fig.width=4}
+  coord_fixed(xlim = c(0, 0.03), ylim = c(0, 0.03)) +
+  ggtitle("Soporte")
 soportes <- qqplot(
     quality(filtradas_hl)$lift, 
     quality(filtradas_lift)$lift, plot.it = FALSE) %>% 
   as_tibble()
-ggplot(soportes, aes(x, y)) +
+g_lift <- ggplot(soportes, aes(x, y)) +
   geom_abline(colour = "red") +
-  geom_point() +
+  geom_point(alpha = 0.5) +
   xlab("Lift (filtro Hyperlift)") +
-  ylab("Lift (filtro Lift)") + coord_fixed()
+  ylab("Lift (filtro Lift)") + coord_fixed() +
+  ggtitle("Lift")
 ```
+
+```{r, fig.width = 8, fig.height=4}
+g_soporte + g_lift +
+  plot_annotation(
+  subtitle = "Soporte y Lift con filtro de reglas por lift vs. hyperlift")
+```
+
+La distribución de valores de *lift* no es tan diferente, de forma que esta
+medida de calidad no se degrada en el conjunto de reglas que encontramos:
 
 En resumen, al utilizar *hyper-lift* para filtrar reglas en lugar de *lift* obtenemos reglas de mejor calidad:
 
@@ -1132,13 +1147,13 @@ no obtener demasiadas reglas o demasiado pocas)
 
 ```{r, results=FALSE, message=FALSE}
 b_reglas_lift <- subset(b_reglas, 
-                        hyper_lift > 1.75 & confidence > 0.1)
+                        hyper_lift > 1.75 & confidence > 0.05)
 reglas_f <- subset(b_reglas_lift, size(b_reglas_lift) == 2)
 ```
 
 
 
-```{r, fig.width=10, fig.height=8, warning = FALSE}
+```{r, fig.width=10, fig.height=8, warning = FALSE, message=FALSE}
 library(tidygraph)
 library(ggraph)
 df_reglas <- reglas_f %>% DATAFRAME %>% rename(from = LHS, to = RHS) 
