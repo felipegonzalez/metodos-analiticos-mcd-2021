@@ -1222,7 +1222,7 @@ artículos (documentos), entonces esas oraciones son indicadores de plagio
 
 
 
-## Tarea {-}
+## Ejercicios
 
 1. Considera los datos de *datos/recetas*. Lee los datos, asegúrate
 que puedes filtrar por tipo de cocina, y que puedes aplicarles

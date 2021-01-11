@@ -70,8 +70,6 @@ aplicación de los algoritmos y los métodos, y menos en las herramientas para i
 
 - Las notas del curso están R, y en algunos casos usamos python o línea de comandos. Puedes usar python también para hacer tareas y ejercicios. 
 
-## Referencias {-}
-
-Nuestro texto básico es [@mmd]. Referencias básicas adicionales son
+- Nuestro texto básico es [@mmd]. Referencias básicas adicionales son
 [@jurafsky] (para procesamiento de lenguaje natural), y [sparklyr](https://therinspark.com/) para
 utlizar la interfaz de R a [Spark](https://spark.apache.org). 
