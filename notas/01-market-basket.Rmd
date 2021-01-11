@@ -77,7 +77,7 @@ num_canastas <- nrow(canastas_nest)
 articulos_frec <- canastas_nest %>% 
     unnest(cols = articulos) %>% 
     group_by(articulos) %>%
-    summarise(n  = n()) %>%
+    summarise(n  = n(), .groups = "drop") %>%
     mutate(prop = n / num_canastas) %>%
     arrange(desc(n))
 DT::datatable(articulos_frec %>%
@@ -517,7 +517,7 @@ replicaciones <- map(1:10, function(i){
   trans <- simular_transacciones(n_items = 169, n_trans = 10000, prob = probs_items)
   ap_indep <- apriori(trans, parameter = pars, control = list(verbose = FALSE))
   conteos <- table(size(ap_indep))
-  tibble(rep = i, long = names(conteos), n = conteos)
+  tibble(rep = i, long = names(conteos), n = as.numeric(conteos))
 })
 reps_tbl <- bind_rows(replicaciones)
 ```
@@ -528,7 +528,7 @@ Ahora vamos a comparar con el análisis de las canastas reales:
 # calcular observados
 ap <- apriori(lista_mb, parameter = pars, control = list(verbose = FALSE))
 conteos_obs <- table(size(ap))
-obs_tbl <- tibble(long = names(conteos_obs), n = conteos_obs)
+obs_tbl <- tibble(long = names(conteos_obs), n = as.numeric(conteos_obs))
 ggplot(reps_tbl, aes(x = long, y = n)) + geom_jitter() +
   geom_point(data = obs_tbl, colour = 'red', size = 3) + 
   labs(x = 'Tamaño')

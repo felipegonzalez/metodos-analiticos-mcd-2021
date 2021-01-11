@@ -4,7 +4,6 @@ author: "Felipe González"
 email: felipexgonzalez@gmail.com
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
-output: bookdown::gitbook
 documentclass: book
 bibliography: [referencias.bib, packages.bib]
 biblio-style: apalike
@@ -13,7 +12,7 @@ github-repo: felipexgonzalez/metodos-analiticos-mcd
 description: "Notas para métodos analíticos 2021"
 ---
 
-# Introducción {-}
+# Introducción 
 
 Este curso trata sobre diversas técnicas de análisis de datos, en su mayoría diseñadas
 para escalar a datos grandes. El enfoque del curso se concentra más en el entendimiento y 
@@ -71,11 +70,7 @@ aplicación de los algoritmos y los métodos, y menos en las herramientas para i
 
 - Las notas del curso están R, y en algunos casos usamos python o línea de comandos. Puedes usar python también para hacer tareas y ejercicios. 
 
-## Evaluación {-}
-
-- Examen parcial (40\%, mitad en casa y mitad en clase)
-- Tareas semanales (25\%)
-- Proyecto final (35\%)
+## Referencias {-}
 
 Nuestro texto básico es [@mmd]. Referencias básicas adicionales son
 [@jurafsky] (para procesamiento de lenguaje natural), y [sparklyr](https://therinspark.com/) para
