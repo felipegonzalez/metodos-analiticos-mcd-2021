@@ -1,9 +1,12 @@
 bookdown::gitbook:
-  css: [css/style.css, css/toc.css, css/font-awesome.min.css]
+  css: css/style.css
   config:
     toc:
       before: |
         <li><a href="./">Métodos Analíticos</a></li>
       after: |
         <li><a href="https://github.com/felipegonzalez/metodos-analiticos-mcd-2021" target="blank">Repositorio de Github</a></li>
-    edit: https://github.com/felipegonzalez/metodos-analiticos-mcd-2021/edit/master/notas/%s
+    edit: 
+      link: https://github.com/felipegonzalez/metodos-analiticos-mcd-2021/edit/master/notas/%s
+      text: "Editar"
+    sharing: no

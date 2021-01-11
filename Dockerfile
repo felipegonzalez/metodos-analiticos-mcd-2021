@@ -71,3 +71,4 @@ RUN install2.r --error tm text2vec textrank \
 
 RUN install2.r --error patchwork
 
+RUN r -e 'devtools::install_github("rstudio/bookdown", ref = "92c59d32ecb46aa8cb7150ba1139621705e23901")'
