@@ -5,7 +5,7 @@ Notas y material para el curso de Métodos Analíticos (Ciencia de Datos, ITAM).
 en un contenedor (con [imagen base de rocker](https://www.rocker-project.org, y limitado a unos 8G de memoria)  construido con el Dockerfile del repositorio:
 
 ```
-docker build -t ma-rstudio .
+docker build . -t ma-rstudio
 docker run --rm -p 8787:8787 -p 4040:4040 -e PASSWORD=mipass -v /tu/carpeta/local:/home/rstudio/ma ma-rstudio
 ```
 
