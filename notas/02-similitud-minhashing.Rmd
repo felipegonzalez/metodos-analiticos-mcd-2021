@@ -650,7 +650,7 @@ Cuando el número de tejas no exactamente un primo, hacemos lo siguiente:
     
  Supongamos que tenemos $\{0,1,\ldots, m-1\}$ tejas numeradas. Seleccionamos un
 primo $p\geq m$, y definimos las funciones
-$$H =\{ h_{a,b}(x) = (ax + b) \bmod p }$$
+$$H =\{ h_{a,b}(x) = (ax + b) \bmod p \}$$
 En lugar de escoger una permutación al azar, escogemos
 $a \in \{1,\cdots, p-1\}$, y $b \in \{0,\cdots, p-1\}$ al azar. Usamos
 en el algoritmo estas funciones $h_i$ como si fueran permutaciones.
