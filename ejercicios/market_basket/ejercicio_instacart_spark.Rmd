@@ -112,7 +112,7 @@ ggraph(graph_1, layout = "igraph", algorithm ="graphopt") +
   geom_node_point(aes(size = centrality, colour = centrality)) + 
   geom_node_text(aes(label = name), size=3,
                  colour = 'gray20', repel=TRUE) +
-  theme_graph()
+  theme_graph(base_family = "sans")
 ```
 
 Podemos hacer queries de las reglas como sigue. Primero
