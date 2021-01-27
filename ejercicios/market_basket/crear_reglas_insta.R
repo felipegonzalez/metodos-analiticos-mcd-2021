@@ -3,6 +3,9 @@ library(arules)
 library(here)
 
 #Se requeren unos 6G de memoria para correr este script
+#Correr desde el directorio base del repositorio
+#Necesitas bajar el archivo order_products__prior.csv
+# checa el readme en la carpeta datos/instacart-kaggle
 
 # leer transacciones
 ruta_trans <- here("datos", "instacart-kaggle","order_products__prior.csv")
@@ -60,10 +63,12 @@ obtener_recoms <- function(canasta){
 canasta <- c("31717", 	"47766")
 obtener_nombres(canasta)
 recoms <- obtener_recoms(canasta)
-View(recoms)
+recoms
+#View(recoms)
 
-canasta <- c("30529", "32647")
+canasta <- c("30529")
 obtener_nombres(canasta)
 recoms <- obtener_recoms(canasta)
-View(recoms)
+recoms
+#View(recoms)
 
