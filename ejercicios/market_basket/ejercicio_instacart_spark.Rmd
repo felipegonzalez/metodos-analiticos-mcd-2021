@@ -16,6 +16,7 @@ config <- spark_config()
 # configuración para modo local, ajustar la memoria del driver solamente
 # pueden requerir más memoria para el archivo grande
 config$`sparklyr.shell.driver-memory` <- "6G"
+config$`spark.env.SPARK_LOCAL_IP.local` <- "0.0.0.0"
 sc <- spark_connect(master = "local", config = config)
 sc$config
 ```
@@ -33,8 +34,7 @@ instacart_df <- spark_read_csv(sc, 'instacart',
                 #path='../../datos/instacart-kaggle/order_products__prior.csv',
                 # chico
                 path='../../datos/instacart-kaggle/order_products__train.csv',
-                memory = FALSE,
-                repartition = 24,
+                memory = TRUE,
                 overwrite = TRUE) %>%
                 select(order_id, product_id, add_to_cart_order, reordered)
 instacart_df %>% head(10)
