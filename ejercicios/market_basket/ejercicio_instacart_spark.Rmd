@@ -14,6 +14,7 @@ Abrimos una conexión local de spark:
 ```{r}
 config <- spark_config()
 # configuración para modo local, ajustar la memoria del driver solamente
+# pueden requerir más memoria para el archivo grande
 config$`sparklyr.shell.driver-memory` <- "6G"
 sc <- spark_connect(master = "local", config = config)
 sc$config
@@ -21,14 +22,17 @@ sc$config
 
 
 ```{r, engine = 'bash'}
-head -5 ../../datos/instacart-kaggle/order_products__prior.csv
-wc -l ../../datos/instacart-kaggle/order_products__prior.csv
+head -5 ../../datos/instacart-kaggle/order_products__train.csv
+wc -l ../../datos/instacart-kaggle/order_products__train.csv
 ```
 
 
 ```{r}
-instacart_df <- spark_read_csv(sc, 'instacart', 
-                path='../../datos/instacart-kaggle/order_products__prior.csv',
+instacart_df <- spark_read_csv(sc, 'instacart',
+                # grande
+                #path='../../datos/instacart-kaggle/order_products__prior.csv',
+                # chico
+                path='../../datos/instacart-kaggle/order_products__train.csv',
                 memory = FALSE,
                 repartition = 24,
                 overwrite = TRUE) %>%
