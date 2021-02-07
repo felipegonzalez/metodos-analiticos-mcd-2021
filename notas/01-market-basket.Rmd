@@ -574,14 +574,14 @@ Una manera simple de obtener una guía para escoger el mínimo $s$ se puede
 obtener con el siguiente argumento: para un $I$ fijo con soporte $s_I$, si 
 $n$ es suficientemente grande entonces podemos usar la aproximación normal
 con $E(n(I)) = ns_I$ y $var(n(I)) = ns_I(1-s_I)$. Si suponemos que nos interesa
-excluir con probabilidad mayor a 0.15 a los conjuntos $I$ tales que $s_I\leq 0.75 s,$
+capturar con probabilidad menor a 0.15 a los conjuntos $I$ tales que $s_I\leq 0.5 s,$
 entonces podemos demostrar que basta que 
-$$s\geq \frac{1}{2\sqrt{n}}$$
+$$s\geq \frac{1}{\sqrt{n}}$$
 **que podemos usar como guía aproximada para escoger el mínimo soporte para  un análisis dado**. Abajo mostramos una tabla de valores mínimos **sugeridos** para cada $n$:
 
 ```{r}
 tibble(n = c(1e3, 1e4, 1e5, 1e6, 1e7)) %>% 
-  mutate(s_min = 0.5 / sqrt(n))
+  mutate(s_min = 1 / sqrt(n))
 ```
 
 - Usualmente queremos hacer el soporte mínimo $s$ un poco más chico, para que
