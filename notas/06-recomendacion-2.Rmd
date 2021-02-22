@@ -1,0 +1,401 @@
+# Dimensiones latentes para recomendación
+
+En las similitudes que vimos arriba, es razonable pensar que hay ciertos "conceptos" 
+que agrupan o separan películas, y así mismo, que los usuarios se distinguen por el gusto o no
+que tienen por estos "conceptos".
+
+En esta parte, consideramos la idea de utilizar reducción de dimensionalidad para
+hacer recomendaciones. Esta idea propone que hay ciertos factores latentes (no observados)
+que describen películas con "contenido implícito similar", y usuarios según su interés en esa dimensión.
+Otra manera de llamar estos factores latentes es **embedding**: buscamos un **embedding** (una 
+representación numérica en cierta dimensión no muy alta) que nos permita predecir el gusto
+de un usuario por una película.
+
+Este método nos permitirá también controlar mejor los resultados ruidosos que
+obtuvimos en los ejemplos anteriores (usando regularización y reducción
+de dimensión).
+
+
+
+### Ejemplo: una dimensión latente{#ejemplo}
+Por ejemplo: consideramos una dimensión de películas serias contra películas divertidas.
+$3$ películas podrían describirse con
+
+$$v=(-2,0,1)$$,
+
+lo que interpretamos como la película $1$ es divertida (negativa en seriedad-diversión), la película $2$ está en promedio, y la película $3$ es más seria que las dos anteriores.
+ 
+Por otro lado, tenemos descriptores de 5 usuarios:
+
+$$u=(2,3,-3,0,1)$$
+que dice que a los primeros dos usuarios les gustan las películas serias, al tercero le gustan las divertidas, y los dos últimos no tienen preferencia clara a lo largo de esta dimensión.
+
+Qusiéramos predecir el gusto usando estos dos vectores. Nuestras predicciones (considerando que $u$ y $v$ son matrices de una columna) serían simplemente
+
+$$\widetilde{X} = u v^t$$
+
+```{r}
+u <- c(2,3,-3,0,1)
+v <- c(-2,0,1)
+gustos <- u%*%t(v)
+gustos
+```
+
+
+Así que al usuario $1$ le recomndamos la película $3$, pero al usuario $3$ le recomendamos la película $1$.
+
+---
+
+La idea es entonces encontrar pesos para películas $u$ y para usuarios $v$ de forma que
+$X\approx \widetilde{X} = uv^t$: podemos reproducir las calificaciones observadas a partir de nuestro modelo de factores latentes.
+
+Nótese sin embargo que hay varias dimensiones que pueden describir a películas y usuarios:
+por ejemplo, seria-divertida, artística-hollywood, ciencia ficción, con/sin violencia, etc. 
+Podemos proponer más dimensiones latentes de la siguiente forma:
+
+
+### Ejemplo: dos dimensiones latentes {#ejemplo}
+Tenemos la dimensión anterior de seria-divertida
+```{r}
+v_1 <- c(-2,0,1)
+u_1 <- c(2,3,-3,0,1)
+```
+Y supongamos que tenemos otra dimensión con violencia - sin violencia
+```{r}
+v_2 <- c(-3,2,2)
+u_2 <- c(-3,-3,0,-2,4)
+```
+
+
+Que quiere decir que las películas $2, 3$ tienen volencia, pero la película $1$ no. Por otra parte, a los usuarios $1,2$ y $5$ no les gustan las películas con violencia, mientras que al usuario $5$ si les gustan.
+
+La idea ahora es que el gusto de una persona por una película se escribe como combinación de las dos dimensiones. Por ejemplo, para la persona $1$ tenemos, y la película $1$, empezamos haciendo
+
+```{r}
+u_1[1]*v_1[1]
+u_2[1]*v_2[1]
+```
+
+lo que quiere decir que el hecho de que la película $1$ no sea seria le resta $4$ en gusto (pues la película $1$ está del lado "divertido"), pero le suma $9$ en gusto, pues es una película sin violencia y esta persona está del lado "sin violencia".
+
+Sumamos para encontrar el gusto total
+
+```{r}
+u_1[1]*v_1[1] + u_2[1]*v_2[1]
+```
+
+Para calcular los gustos sobre todas las personas y películas, haríamos
+
+```{r}
+U <- cbind(u_1, u_2)
+V <- cbind(v_1, v_2)
+U
+V
+U %*% t(V)
+```
+
+- El renglón $j$ de $U$ son los valores en las dimensiones latentes para
+la película $i$ (descriptores de usuarios).
+- El renglón $j$ de $V$ son los valores en las dimensiones latentes para
+el usuario $j$ (descriptores de películas)
+
+
+```{block2, type ="resumen"}
+Con $k$ dimensiones latentes, el modelo que proponemos es:
+
+$$\widetilde{X} = UV^t$$
+
+donde $U$ es una matrix de $n\times k$ ($n=$ número de usuarios), y $V$ es una matriz
+de $p \times k$, donde $p$ es el número de películas.
+
+Buscamos que, si $X$ son las verdaderas calificaciones, entonces
+$$X\approx \widetilde{X}.$$
+
+y nótese que esta aproximación es en el sentido de las entradas de $X$ que **son observadas**. Sin embargo, $\widetilde{X}$ nos da predicciones para **todos los pares película-persona**.
+```
+
+
+Bajo este modelo, la predicción para el usuario $i$ y la película $j$
+es la siguiente suma sobre las dimensiones latentes:
+
+$$\widetilde{x}_{ij} =\sum_k u_{ik} v_{jk}$$
+
+que expresa el hecho de que el gusto de $i$ por $j$ depende de una combinación (suma)
+de factores latentes de películas ponderados por gusto por esos factores del usuario.
+
+
+El número de factores latentes $k$ debe ser seleccionado (por ejemplo, según el error de validación). Dado $k$, para encontrar $U$ y $V$ (un total de $k(n+p)$ parámetros) buscamos
+minimizar 
+
+$$\sum_{(i,j)\, obs} (x_{ij}-\widetilde{x}_{ij})^2,$$
+
+
+que también podemos escribir este problema (recuérdese que $u_i$ y
+$v_j$ aquí son vectores renglón) como
+
+$$\min_{U,V}\sum_{(i,j)\, obs} (x_{ij}-u_iv_j^t)^2$$
+donde $u_i$ es el renglón $i$-esimo de $U$ (gustos latentes del usuario $i$ en cada dimensión), y $v_j$ es el renglón $j$-ésimo de la matriz $V$ (calificación latente de la película en cada dimensión)
+
+
+```{block2, type='resumen'}
+**¿Por qué funciona la idea de factores latentes?**
+
+- El método de factorización de matrices de grado bajo ($k$)
+funciona compartiendo información a lo largo de películas y usuarios. Como tenemos
+que ajustar los datos observados, y solo tenemos a nuestra disposición $k$
+  descriptores para cada película y usuario, una minimización exitosa
+captura regularidades en los datos.
+
+- Es importante que la representación sea de grado relativamente bajo,
+pues esta "compresión" es la que permite que las dimensiones 
+latentes capturen regularidades que están en los datos observados (que
+esperamos encontrar en el proceso de ajuste). 
+```
+
+
+Por ejemplo, supongamos que el gusto por las películas sólo depende de
+una dimensión sería - divertida. Si ajustamos un modelo de un solo
+factor latente, un **mínimo** se alcanzaría separando con la dimensión latente
+las películas serias de las divertidas, y los usuarios que prefieren películas
+serias o divertidas. Esta sería una buena explicación de los datos observados,
+y las predicciones para películas no vistas sería buena usando simplemente
+el valor en seriedad de la película (extraída de otras personas con gustos
+divertido o serio) y el gusto por seriedad de esa persona (extraida de la 
+observación de que le gustan otras películas serias u otras divertidas).
+
+### Combinación con modelo base
+
+Podemos usar también ideas de nuestro modelo base y modelar desviaciones en lugar de calificaciones directamente:
+
+Si $X^0$ son las predicciones del modelo de referencia, y
+$$R = X-X^0$$
+son los residuales del modelo base, buscamos mejor
+$$R\approx \widetilde{X} = UV^t$$
+de manera que las predicciones finales son
+$$X^0 + \widetilde{X}$$
+
+Veremos también más adelante cómo regularizar estos sesgos como
+parte de la construcción del modelo.
+
+## Factorización de matrices
+
+Como vimos arriba, reexpresamos nuestro problema como un problema
+de factorización de matrices  (encontrar $U$ y $V$). Hay varias alternativas populares para atacarlo:
+
+- Descomposición en valores singulares (SVD).
+- Mínimos cuadrados alternados.
+- Descenso en gradiente estocástico.
+
+Para entender más del primer enfoque, puedes consultar por ejemplo
+las notas del curso de aprendizaje de máquina <https://github.com/felipegonzalez/aprendizaje-maquina-mcd/blob/master/14-reducir-dimensionalidad.Rmd>. No vamos a ver más de este enfoque, pues no
+es del todo apropiado: nuestras matrices tienen muchos datos faltantes, y SVD naturalmente no está diseñado para lidiar con este problema. Se pueden hacer ciertas imputaciones (por ejemplo, insertar 0's una vez que centramos por usuario), pero los siguientes dos métodos están mejor adaptados para
+nuestro problema.
+
+## Mínimos cuadrados alternados
+
+Supongamos entonces que queremos encontrar matrices $U$ y $V$, donde $U$ es una matrix de $n \times k$ ($n=$ número de usuarios), y $V$ es una matriz
+de $p \times k$, donde $p$ es el número de películas que nos de una
+aproximación de la matrix $X$ de calificaciones
+$$
+X \approx UV^t
+$$
+Ahora supongamos que conocemos $V_1$. Si este es el caso, entonces queremos
+resolver para $U_1$:
+$$ \min_{U_1}|| X - U_1V_1^t||_{obs}^2$$
+Como $V_1^t$ están fijas, este es un problema de mínimos cuadrados usual, y puede resolverse analíticamente (o usar descenso en gradiente, que
+es simple de calcular de forma analítica) para encontrar $U_1$. Una vez que encontramos $U_1$, la fijamos, e intentamos ahora resolver para $V$:
+
+$$ \min_{V_2}|| X - U_1V_2^t||_{obs}^2$$
+Y una vez que encontramos $V_2$ resolvemos
+
+$$ \min_{U_2}|| X - U_2V_2^t||_{obs}^2$$
+
+Continuamos este proceso hasta encontrar un mínimo local o hasta cierto número de iteraciones. Para inicializar $V_1$, en [@alsreg] se recomienda tomar como primer
+renglón el promedio de las calificaciones de las películas, y el resto 
+números aleatorios chicos (por ejemplo $U(0,1)$). También pueden inicializarse con números
+aleatorios chicos las dos matrices.
+
+### Mínimos cuadrados alternados con regularización
+
+Para agregar regularización y lidiar con los datos ralos, podemos
+incluir un coeficiente adicional. Minimizamos entonces (como en
+ [@alsreg]):
+
+$$\min_{U,V}\sum_{(i,j)\, obs} (x_{ij}-u_i^tv_j)^2 + 
+\lambda \left ( \sum_i n_{i}||u_i||^2 + \sum_j m_{j} ||v_j||^2 \right)$$
+
+y modificamos de manera correspondiente cada paso de mínimos cuadrados
+mostrado arriba. $n_{i}$ es el número de evaluaciones del usuario $i$, y
+$m_j$ es el número de evaluaciones de la película $j$.
+
+**Observaciones**:
+
+- Nótese que penalizamos el tamaños de los vectores $u_i$ y $v_j$ para evitar sobreajuste (como en regresión ridge).
+- Nótese también que los pesos $n_i$ y $m_j$ en esta regularización hace comparables el término que aparece en la suma de los residuales al cuadrado
+(la primera suma),
+y el término de regularización: por ejemplo, si el usuario $i$ hizo
+$n_i$ evaluaciones, entonces habrá $n_i$ términos en la suma de la izquierda. Lo mismo podemos decir acerca de las películas.
+- Este no es el único término de regularización posible. Por ejemplo, podríamos *no* usar los pesos $n_i$ y $m_j$, y obtendríamos
+un esquema razonable también, donde hay más regularización relativa
+para usuarios/películas que tengan pocas evaluaciones.
+
+Este método está implementado en [spark](https://spark.apache.org/docs/3.0.0/mllib-collaborative-filtering.html). La implementación está basada parcialmente en [@alsreg]. La inicialización
+es diferente en spark, ver [el código](https://github.com/apache/spark/blob/v3.0.0/mllib/src/main/scala/org/apache/spark/ml/recommendation/ALS.scala), donde cada renglón se inicializa con
+un vector de $N(0,1)$ normalizado.
+
+En este caso, copiamos nuestra tabla a spark (nota: esto es algo que normalmente no haríamos, los datos habrían sido cargados en el cluster
+de spark de otra forma):
+
+```{r,  message=FALSE, warning=FALSE}
+library(tidyverse)
+library(sparklyr)
+# configuración para spark
+config <- spark_config()
+config$`spark.env.SPARK_LOCAL_IP.local` <- "0.0.0.0"
+config$`sparklyr.shell.driver-memory` <- "8G"
+config$spark.executor.memory <- "2G"
+```
+
+```{r}
+# conectar con "cluster" local
+sc <- spark_connect(master = "local", config = config)
+spark_set_checkpoint_dir(sc, './checkpoint')
+```
+
+
+```{r leertabla}
+dat_tbl <- spark_read_csv(sc, name="netflix", "../datos/netflix/dat_muestra_nflix.csv") 
+dat_tbl <- dat_tbl %>% select(-fecha)
+```
+
+```{r}
+usuario_val <- dat_tbl %>% select(usuario_id) %>% 
+  distinct() %>% 
+  sdf_sample(fraction = 0.1) %>% compute("usuario_val")
+pelicula_val <- dat_tbl %>% select(peli_id) %>%
+  distinct() %>% 
+  sdf_sample(fraction = 0.1) %>% compute("pelicula_val")
+valida_tbl <- dat_tbl %>% 
+  inner_join(usuario_val) %>% 
+  inner_join(pelicula_val) %>% 
+  compute("valida_tbl")
+```
+
+```{r}
+entrena_tbl <- dat_tbl %>% anti_join(valida_tbl) %>% 
+  compute("entrena_tbl")
+entrena_tbl %>% tally()
+valida_tbl %>% tally()
+```
+
+Vamos a hacer primero una descomposición en $15$ factores,
+con regularización relativamente alta:
+
+```{r als-spark}
+modelo <- ml_als(entrena_tbl, 
+              rating_col = 'calif',
+              user_col = 'usuario_id',
+              item_col = 'peli_id', 
+              rank = 15, reg_param = 0.1,
+              checkpoint_interval = 4,
+              max_iter = 50)
+# Nota: checkpoint evita que la gráfica de cálculo
+# sea demasiado grande. Cada 4 iteraciones hace una
+# nueva gráfica con los resultados de la última iteración.
+```
+
+```{r}
+modelo
+```
+
+Hacemos predicciones para el conjunto de validación:
+
+```{r, warning = FALSE, message = FALSE, fig.width=5, fig.asp=0.7}
+preds <- ml_predict(modelo, valida_tbl) %>%
+  mutate(prediction = ifelse(isnan(prediction), 3.5, prediction))
+ml_regression_evaluator(preds, label_col = "calif", prediction_col = "prediction",
+  metric_name = "rmse")
+```
+
+Y podemos traer a R los datos de validación (que son chicos) para examinar:
+
+```{r}
+preds_df <- preds %>% collect() #traemos a R con collect
+ggplot(preds_df, aes(x = prediction)) + geom_histogram()
+```
+
+
+Y redujimos considerablemente el error del modelo base. Examinamos 
+ahora las dimensiones asociadas con películas:
+
+
+```{r}
+modelo$item_factors 
+```
+
+```{r}
+V_df <- modelo$item_factors %>%
+  select(id, features) %>% collect() %>% 
+  unnest_wider(features, names_sep = "_")
+```
+
+Nota: La columna *features* contiene la misma información de *feature_1,feature_2,...*, pero en forma de lista.
+
+Examinemos la interpretación de los factores latentes de las
+películas. 
+
+```{r}
+pelis_nombres <- read_csv('../datos/netflix/movies_title_fix.csv', col_names = FALSE, na = c("", "NA", "NULL"))
+names(pelis_nombres) <- c('peli_id','año','nombre')
+medias_peliculas <- entrena_tbl %>% group_by(peli_id) %>% 
+  summarise(num_calif_peli = n(), media_peli = mean(calif)) %>% 
+  collect()
+latentes_pelis <- V_df %>% 
+  rename(peli_id = id) %>% 
+  left_join(pelis_nombres %>% left_join(medias_peliculas))
+latentes_pelis <- latentes_pelis %>% 
+    mutate(num_grupo = ntile(num_calif_peli, 10))
+```
+
+Para la primera dimensión latente:
+
+
+```{r}
+top_tail <- function(latentes_pelis, feature){
+top_df <- arrange(latentes_pelis, {{ feature }} ) %>% 
+  select(nombre, {{ feature }}, media_peli, num_calif_peli) %>% 
+  filter(num_calif_peli > 2000) %>% 
+  head(100) 
+tail_df <- arrange(latentes_pelis, desc({{ feature }}) ) %>% 
+  select(nombre, {{ feature }}, media_peli, num_calif_peli) %>% 
+  filter(num_calif_peli > 2000) %>% 
+  head(100)
+print(top_df)
+print(tail_df)
+bind_rows(top_df, tail_df)
+}
+res <- top_tail(latentes_pelis, features_1)
+```
+
+La segunda dimensión latente:
+
+```{r}
+res <- top_tail(latentes_pelis, features_2)
+```
+
+**Nota**: Podemos usar **ml_recommend** para producir recomendaciones de películas para
+usuarios, o para cada película los usuarios más afines.
+
+```{r}
+#top_recom <- ml_recommend(modelo, type = "items", n = 2) 
+```
+
+
+```{r}
+sparklyr::spark_disconnect_all()
+```
+
+### Ejercicio {-}
+Examina otras dimensiones latentes, ¿qué puedes interpretar?
+
+
