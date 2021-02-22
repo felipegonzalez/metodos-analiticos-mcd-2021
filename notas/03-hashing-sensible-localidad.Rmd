@@ -1,4 +1,4 @@
- Similitud: Locality sensitive hashing
+# Similitud: Locality sensitive hashing
 
 ```{r, echo=FALSE, message=FALSE}
 library(tidyverse)
