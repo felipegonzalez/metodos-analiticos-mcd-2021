@@ -1,0 +1,226 @@
+---
+title: "Tarea 8 (reducción de dimensionalidad)"
+output: html_notebook
+---
+
+
+1. Considera $u$ que representa valores en una dimensión para los casos ($n$)
+y un vector $v$ que representa valores asociados para las variables ($p$).
+
+```{r}
+u <- c(0, 1, 2, 4, 4)
+v <- c(0.5 , 1 ,2)
+#u <- u / sqrt(sum(u^2))
+#v <- v / sqrt(sum(v^2))
+```
+
+Si $sigma = 10$, calcula la matriz de datos $n\times p$ generada por la matriz
+de rango 1  $\sigma u v^t$.
+
+```{r}
+# completa el código
+X_1 <- 10 * u %*% t(v)
+X_1
+```
+¿Cómo describirías esta matriz de datos en términos de las columnas? ¿En términos 
+de los renglones? **Cada columna es un múltiplo del vector $u$, y el múltiplo depende del
+valor correspondiente del vector $v$.
+
+2. Si $X_1$ es la matriz que obtuviste en el inciso anterior, agrega ruido:
+```{r}
+set.seed(3)
+X <- X_1 + matrix(rnorm(15*3, 0, 5), 5, 3)
+X
+```
+
+3. Recupera la dimensión que construimos en 1) usando la función *svd* (puedes intentar
+optimizando directamente si quieres):
+
+```{r}
+# completa el código
+svd_1 <- svd(X)
+svd_1
+```
+
+```{r}
+sigma <- svd_1$d[1] 
+u_p <- svd_1$u[, 1]
+v_p <- svd_1$v[, 1]
+```
+
+```{r}
+u_p
+v_p
+round(sigma * u_p %*% t(v_p), 1) 
+X_1
+```
+
+
+- Identifica las columnas de $U$ y $V$ en la salida de *svd* que corresponden a los vectores que usamos para construir $X_1$,
+
+la primeras columnas de U y V.
+
+- ¿Cuál es la relación entre los $u$ y $v$ que usamos al principio y los que obtuvimos
+de la función *svd*?
+
+Son múltiplos cercanos
+```{r}
+plot(u_p, u)
+plot(v_p, v)
+```
+
+
+4. Argumenta con la salida de *svd* que las aproximaciones de rango 2 y rango 3 son
+no aportan mucho sobre la de rango 1. 
+
+- Verifica comparando matrices 
+que las aproximaciones de rango 1 y rango 2
+son muy similares. 
+
+Las distancias de $X$ a cada aproximación sucesiva:
+
+```{r}
+X_1_svd <- sigma * u_p %*% t(v_p)
+X_2_svd <- svd_1$d[2] * svd_1$u[,2] %*% t(svd_1$v[,2])
+X_3_svd <- svd_1$d[3] * svd_1$u[,3] %*% t(svd_1$v[,3])
+sqrt(sum((X - 0)^2)) # aproximando con 0, o tamaño de X
+sqrt(sum((X - X_1_svd)^2)) # distancia a primera aproximacion
+sqrt(sum((X - X_1_svd - X_2_svd )^2)) # distancia a segunda aproximacion
+sqrt(sum((X - X_1_svd - X_2_svd - X_3_svd)^2))
+```
+
+- Verifica calculando la distancia Frobenius entre la aproximación de rango 1 y 2 y
+la matriz original, usando los valores singulares ($\sigma$).
+
+También, como vimos en clase, se pueden calcular como:
+
+```{r}
+sqrt(sum(X^2) - svd_1$d[1]^2)
+sqrt(sum(X^2) - svd_1$d[1]^2 - svd_1$d[2]^2)
+(sum(X^2) - svd_1$d[1]^2 - svd_1$d[2]^2 - svd_1$d[3]^2)
+```
+En términos de calidad de la aproximación, con la primera componente
+obtenemos una aproximación muy buena:
+
+```{r}
+1- (sum(X^2) - svd_1$d[1]^2)/sum(X^2)
+ # distancia a primera aproximacion
+```
+La segunda componente aporta relativamente poco a la calidad de la
+representación:
+
+```{r}
+1- (sum(X^2) - svd_1$d[1]^2- svd_1$d[2]^2)/sum(X^2)
+ # distancia a primera aproximacion
+```
+
+
+
+
+5. Considera los siguientes datos de gasto por decil en distintos tipos de alimentos
+(cada decil contiene casi 3 millones de hogares, y el gasto está en miles de pesos.
+Nota: estos datos son de 2010/2008)
+```{r}
+library(tidyverse)
+deciles <- read_csv('../datos/enigh_deciles.csv')
+deciles_nom <- names(deciles)[-1]
+rubros_nom <- deciles$X1 
+```
+
+6. Calcula la primera dimensión usando la función svd. ¿Qué explica esta dimensión? 
+(Nota: puedes cancelar signos de $u$ y $v$ para hacer más fácil la interpretación) 
+
+```{r}
+X <- as.matrix(deciles[,-1])
+decomp_deciles <- svd(X)
+decomp_deciles$u <- - decomp_deciles$u
+decomp_deciles$v <- - decomp_deciles$v
+decomp_deciles
+```
+
+Viendo la primera dimensión, los pesos para los deciles son:
+
+```{r}
+library(tidyverse)
+tibble(deciles_nom, decomp_deciles$v[,1])
+```
+Esto quiere decir que conforme el decil aumenta, el gasto aumenta proporcionalmente
+sobre todos los deciles. 
+
+El vector de scores de renglones correspondientes indica mayor gasto proporcional
+en algunas categorías sobre otras:
+
+```{r}
+tibble(rubros_nom, u = decomp_deciles$u[,1]) %>%
+  arrange(desc(u)) %>% 
+  knitr::kable()
+```
+La calidad de la aproximación de orden 1 es:
+
+```{r}
+decomp_deciles$d[1]^2 / sum(X^2)
+```
+
+De modo que la primera dimensión producee una aproximación de calidad alta.
+Podemos graficar:
+
+
+```{r}
+X_1 <- decomp_deciles$d[1] * decomp_deciles$u[,1] %*% t(decomp_deciles$v[,1])
+plot(X, X_1)
+```
+
+
+7. Ahora considera la segunda dimensión
+
+- Considera primero el vector $v_2$ (¿para qué deciles
+tiene valores positivos? ¿para qué deciles tiene valores negativos?
+
+
+
+
+```{r}
+decomp_deciles$v[,2] 
+tibble(rubro = deciles$X1, u_2 = decomp_deciles$u[,2]) %>% arrange(u_2) %>% 
+  knitr::kable()
+```
+Y los pesos correspondientes son:
+
+```{r}
+tibble(deciles_nom, v = decomp_deciles$v[,2]) %>% knitr::kable()
+```
+
+Como el decil 9 y 10 tiene valores positivos grandes, cuando multiplicamos por
+el vector 2 de scores, incrementa el gasto alimentos diversos, leche y derivados, fruta, etc.
+y disminuye el gasto en cereales y verduras y legumbres. Lo opuesto sucede para
+los deciles bajos como el 1 y el 2. **Esto indica que conforme a la primera aproximación
+de proporcionaledad, hay una desviación que esta segunda dimensión corrige**.
+
+
+- Puedes también calcular la siguiente matriz de rango 1, para que te ayude 
+a interpretar: es la componente $\sigma_2u_2v_2^t$, que se suma a $\sigma_1 u_1 v_1^t$
+para obtener la aproximación de rango 2. Puedes dividir entre miles (de manera que las unidades finales son millones) para interpretar
+más fácilmente:
+
+```{r}
+# modifica según el código que escribiste arriba:
+A <- round(decomp_deciles$d[2]*tcrossprod(decomp_deciles$u[,2], decomp_deciles$v[,2])/1e3)
+rownames(A) <- deciles$X1
+A
+```
+
+Veamos qué tan buena es la aprximación de orden 2:
+
+```{r}
+X_2 <- decomp_deciles$d[1] * decomp_deciles$u[,1] %*% t(decomp_deciles$v[,1]) +
+  decomp_deciles$d[2] * decomp_deciles$u[,2] %*% t(decomp_deciles$v[,2])
+plot(X, X_2)
+```
+De modo que con dos dimensiones explicamos adecuadamente los patrones importantes
+de  esta tabla. La dimensión 1 contribuye considerablemente más pues:
+
+```{r}
+decomp_deciles$d[1]^2 / sum(X^2)
+decomp_deciles$d[2]^2 / sum(X^2)
+```
+
