@@ -1,0 +1,104 @@
+---
+title: "Reducción de dimensionalidad y marginación de municipios"
+output: html_document
+---
+
+Este ejercicio es para entregar a más tardar el 16 de abril.
+
+## Marginación de municipios
+
+Consideremos el índice de marginación que calcula CONAPO con datos
+de censos y conteos. Este índice un resumen de varios indicadores de carencias de las
+poblaciones de los municipios que nos rankear a los municipios por nivel de marginación.
+Se utiliza frecuentemente en análisis en donde queremos incluir el contexto
+donde viven las personas, y para guiar decisiones
+de política pública.
+
+Por ejemplo, para 2010 tenemos los datos:
+
+```{r, message=FALSE}
+marginacion <- read_csv("./datos/imm-2010.csv")
+descrip <- read_csv("./datos/imm-2010-descrip.csv", skip = 2)
+descrip %>% knitr::kable()
+```
+
+El índice de marginación es una combinación de variables que indican
+distintos tipos de carencias para obtener un resumen o calificación general
+del grado de marginación de **cada municipio**.
+
+```{r}
+ggplot(marginacion, aes(x = IM)) + geom_histogram()
+```
+
+Por ejemplo, si promediamos los índices de marginación de los municipios dentro
+de cada estado obtenemos:
+
+```{r}
+marginacion %>% group_by(NOM_ENT) %>% summarise(marg = mean(IM), n = sum(POB_TOT)) %>% 
+    arrange(desc(marg))
+```
+
+## ¿Cómo se calcula el índice de marginación?
+
+Veamos un resumen de las variables incluidas:
+
+```{r}
+marg_tabla <- marginacion %>% select(ANALF:PO2SM)
+marg_tabla %>% gather(variable, valor, ANALF:PO2SM) %>% group_by(variable) %>% 
+    summarise(q10 = quantile(valor, 0.10),
+              mediana = median(valor), 
+              q90 = quantile(valor, 0.90)) %>% 
+    arrange(desc(mediana))
+```
+
+- Buscamos primero una dimensión latente que nos da la mejor
+aproximación de rango uno a la tabla de marginación. 
+
+**Pregunta 1**: usando la descomposición en valores singulares, encuentra una
+aproximación de rango 1 a la tabla de municipios x 9 variables mostradas arriba
+
+**Pregunta 2**: Calcula una medida de calidad de la aproximación de rango 1. ¿Qué tan buena es?
+
+**Pregunta 3**: En la descomposición que hiciste, ¿Qué usaría cómo medición de marginación por municipio,
+los scores de los municipios o los pesos de las variables?
+
+**Pregunta 4**: Explica cómo se construye tu medición de marginación en términos
+de la descomposición en valores singulares que obtuviste? ¿Cómo se ponderan las
+variables originales para construir tu medición de marginación?
+
+**Pregunta 5**: Observa que variables que tienen unidades más grandes (como PL_5000, 
+porcentaje de población que vive en localidades de menos de 5000 habitantes) tienen
+más peso que otras como OVSAE (porcentaje de habitantes sin agua entubada). Argumenta
+por qué sería buena idea escalar las variables antes de hacer la descomposición en valores
+singulares.
+
+**Pregunta 6**: Escala todas las variables para que tomen valores aproximadamente entre 0 y 1 y
+repite el análisis de descomposición en valores singulares. Compara tu nuevo índice
+con la variable IM (que es el índice de marginación oficial). ¿Qué tan similares son?
+(recuerda que puedes multiplicar por menos tu índice si es necesario) Muestra los nuevos
+pesos de las variables para este nuevo índice que acabas de crear ¿cómo intepretas tu índice
+en términos de estos pesos?. Puedes usar este código
+para reescalar:
+
+
+```{r}
+max_c <- apply(marg_tabla, 2, function(x){ quantile(x, 0.95) })
+min_c <- apply(marg_tabla, 2, min)
+marg_tabla_norm <- scale(marg_tabla, center = min_c, scale = (max_c - min_c))
+```
+
+
+**Pregunta 7** Verifica que puedes reconstruir el índice oficial usando el siguiente 
+escalamiento:
+
+```{r}
+media <- apply(marg_tabla, 2, mean)
+desvest <- apply(marg_tabla, 2, sd)
+marg_tabla_norm <- scale(marg_tabla, center = media, scale = desvest)
+```
+
+**Pregunta 8** Compara tus resultados de la pregunta 6 y pregunta 7. Brevemente explica
+las ventajas que le ves al análisis escalado a 0-1 de la pregunta 6 con el análisis
+de componentes principales de la pregunta 7.
+
+

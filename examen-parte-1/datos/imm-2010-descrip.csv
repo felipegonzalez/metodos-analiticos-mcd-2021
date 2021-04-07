@@ -1,0 +1,19 @@
+Descripción de la base de datos del índice de marginación por municipio 2010.,
+,
+Variable,Descripción
+CVE_ENT,Clave de la entidad federativa
+NOM_ENT,Nombre de la entidad federativa
+CVE_MUN,Clave del municipio
+NOM_MUN,Nombre del municipio
+POB_TOT,Población total
+ANALF,Porcentaje de población de 15 años o más analfabeta
+SPRIM,Porcentaje de población de 15 años o más sin primaria completa 
+OVSDE,Porcentaje de ocupantes en viviendas sin drenaje ni excusado
+OVSEE,Porcentaje de ocupantes en viviendas sin energía eléctrica
+OVSAE,Porcentaje de ocupantes en viviendas sin agua entubada
+VHAC,Porcentaje de viviendas con algún nivel de hacinamiento
+OVPT,Porcentaje de ocupantes en viviendas con piso de tierra
+PL_5000,Porcentaje de población en localidades con menos de 5 000 habitantes
+PO2SM,Porcentaje de población ocupada con ingreso de hasta 2 salarios mínimos
+IM,Índice de marginación 
+GM,Grado de marginación 
